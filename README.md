@@ -69,7 +69,7 @@ Generates high-resolution publication-grade visual figures summarizing global ce
 The large-scale processed `.h5ad` objects and raw network inference outputs are archived in a permanent Zenodo repository for transparency and reproducibility:
 
 **DOI: 10.5281/zenodo.20715903**
-**https://zenodo.org/records/20715903**
+**[https://zenodo.org/records/20715903](https://zenodo.org/records/20999292?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjQ4YTYxZTk0LTRhM2ItNDMzYy05YmYxLTcwN2U4ZmQyNzVlNSIsImRhdGEiOnt9LCJyYW5kb20iOiI3MzE0YzMzODA5NWM0YWQwYzhlN2E5MzBlNzA4YzZlYSJ9.HXEcagG6g_NSzw63xfsbH9p1sySeYZIuN1fzGtqWc127Vxzf5jkfQqIu2EpXWW4l4TKQo5siwsppwOKP_-mwjA)**
 
 ## Requirements
 This pipeline is built for Python 3.10+ and requires the following core libraries:
