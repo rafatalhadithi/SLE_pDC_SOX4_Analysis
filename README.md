@@ -71,8 +71,8 @@ Executes native batch-effect correction across 242 distinct donor profiles.
 * **Input File:** `SLE_pDC_pySCENIC_Complete.h5ad`
 * **Output Artifacts:** `SLE_pDC_Integrated.h5ad`
 
-### `09_cross_cohort_meta_analysis.py`
-Independently evaluates the SOX4-CXCR4 axis in an external pediatric cohort and adult Lupus Nephritis kidney cohort, synthesizing p-values via Fisher’s Combined Probability Test.
+### `09_cross_cohort_validation.py`
+Independently evaluates the SOX4-CXCR4 axis in an external pediatric cohort (GSE135779) and adult Lupus Nephritis kidney cohort (GSE303481) to validate the compartmentalized tissue-homing model.
 * **Input Files:** `GSE135779_RAW_Data/`, `GSE303481_RAW_Data/`
 * **Output Artifacts:** Console statistical readouts
 
