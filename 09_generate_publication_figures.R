@@ -1,106 +1,145 @@
-# Large-Cohort Validation of a Pathogenic SOX4-CXCR4 Network in SLE pDCs
+# 09_generate_publication_figures.R
+# Load required libraries
+suppressPackageStartupMessages({
+  library(reticulate)
+  library(ggplot2)
+  library(dplyr)
+  library(tidyr)
+  library(patchwork)
+  library(viridis)
+})
 
-**Repository Status:** Private (Peer-Review Phase)
+# Force R to use the Python from your active environment
+use_python(Sys.which("python"), required = TRUE)
 
-This repository contains the consolidated 9-step computational pipeline used to process, integrate, and perform network inference on plasmacytoid dendritic cell (pDC) scRNA-seq data from patients with Systemic Lupus Erythematosus (SLE) for the manuscript: *"Large-Cohort Validation of a Pathogenic SOX4-CXCR4 Network in SLE pDCs."*
+# --- 1. SETUP AND DATA LOADING ---
+cat("1. Initializing Python connection via reticulate...\n")
+sc <- import("scanpy")
+pd <- import("pandas")
+ad <- import("anndata")
 
-## Overview
-This workflow utilizes `Scanpy`, `pySCENIC`, `LIANA`, and `Harmony` to identify the **SOX4-CXCR4** regulatory axis. The analysis isolates the pathogenic network and leverages large-scale cohorts to mathematically decouple systemic inflammation from tissue-specific homing mechanisms in Lupus Nephritis.
+# Use dynamic relative paths (Run this from the repository root)
+input_file <- "data/SLE_pDC_Integrated.h5ad"
+output_dir <- "figures/"
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
 
----
+cat("2. Loading integrated dataset (this may take a moment)...\n")
+adata <- sc$read_h5ad(input_file)
 
-## 🚀 Quick Start Guide for Reviewers
+# --- 2. FIGURE 1A: UMAP VALIDATION ---
+cat("3. Generating Figure 1A (UMAPs)...\n")
+umap_coords <- adata$obsm[["X_pca_harmony_umap"]] # Or "X_umap" depending on scanpy version output
+if (is.null(umap_coords)) {
+  umap_coords <- adata$obsm[["X_umap"]]
+}
 
-To ensure seamless reproducibility across different operating systems, this pipeline uses dynamic relative paths. **Ensure your terminal or IDE working directory is set to the repository root before executing the scripts.**
+umap_df <- data.frame(
+  UMAP1 = umap_coords[,1],
+  UMAP2 = umap_coords[,2]
+)
 
-**1. Clone the Repository**
-`git clone https://github.com/YOUR_USERNAME/SLE_pDC_SOX4_Analysis.git`
-`cd SLE_pDC_SOX4_Analysis`
+features <- c("SOX4(+)", "CXCR4", "STAT1(+)", "ISG15")
+for (feat in features) {
+  umap_df[[feat]] <- as.numeric(adata$obs_vector(feat))
+}
 
-**2. Set Up the Data Environment**
-The scripts will automatically generate `outputs/` and `figures/` directories when run. Populate the `data/` folder with the required datasets before executing the pipeline:
-* **Processed Matrices:** Download `SLE_pDC_Cleaned_For_pySCENIC.h5ad`, `SLE_pDC_pySCENIC_Complete.h5ad`, and `SLE_pDC_Integrated.h5ad` from our Zenodo repository (link below).
-* **Global Atlas:** Download the 1.2M cell adult SLE PBMC cohort (`4118e166-34f5-4c1f-9eed-c64b90a3dace.h5ad`) from the CZ CELLxGENE portal.
-* **pySCENIC Databases:** Download `hs_hgnc_tfs.txt`, the hg38 motif `.feather` database, and the motif annotation `.tbl` from the cisTarget repository.
-* **Validation Cohorts:** Download `GSE135779` and `GSE303481` raw data from NCBI GEO and place them in `data/GSE135779_RAW_Data/` and `data/GSE303481_RAW_Data/` respectively.
+plot_umap <- function(df, feature_name, title) {
+  df <- df %>% arrange(.data[[feature_name]])
+  
+  ggplot(df, aes(x = UMAP1, y = UMAP2, color = .data[[feature_name]])) +
+    geom_point(size = 0.6, alpha = 0.85, stroke = 0) +
+    scale_color_gradientn(
+      colors = c("grey90", "#FDC926", "#FA9E3B", "#ED7953", "#D8576B", "#BD3786", "#9C179E", "#7000A8", "#46039F"),
+      name = "Expr"
+    ) + 
+    theme_void(base_size = 14) + 
+    labs(title = title) +
+    theme(
+      plot.title = element_text(face = "bold", hjust = 0.5, size = 15, margin = margin(b = 10)),
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      plot.background = element_rect(fill = "white", color = NA),
+      legend.position = "right",
+      legend.key.height = unit(1.2, "cm"),
+      legend.key.width = unit(0.3, "cm"),
+      legend.title = element_text(face = "bold", size = 10),
+      legend.text = element_text(size = 9),
+      plot.margin = margin(10, 10, 10, 10)
+    )
+}
 
-**3. Execute the Pipeline**
-Run the scripts sequentially from `01` to `09`.
+p1 <- plot_umap(umap_df, "SOX4(+)", "SOX4 Network Activity")
+p2 <- plot_umap(umap_df, "CXCR4", "CXCR4 Gene Expression")
+p3 <- plot_umap(umap_df, "STAT1(+)", "STAT1 Network Activity")
+p4 <- plot_umap(umap_df, "ISG15", "ISG15 Gene Expression")
 
----
+umap_grid <- (p1 | p2) / (p3 | p4) + plot_annotation(tag_levels = 'A')
 
-## Repository Contents & Exact File I/O Mapping
+ggsave(paste0(output_dir, "Fig_1A_Network_vs_Gene_Validation.pdf"), plot = umap_grid, width = 12, height = 10, dpi = 300)
 
-### `01_preprocess_global_ifn.py`
-Initial quality control, pDC isolation, and global Type I IFN volumetric profiling.
-* **Input File:** `data/4118e166-34f5-4c1f-9eed-c64b90a3dace.h5ad`
-* **Output Artifacts:** `data/SLE_pDC_Cleaned_For_pySCENIC.h5ad`, `outputs/01_Global_Type1_IFN_Production_Summary.csv`, `outputs/SLE_pDC_Top77_Upregulated.csv`, `figures/01_Global_Type1_IFN_Production.pdf`
+# --- 3. FIGURE 1B: TOP REGULONS DOTPLOT ---
+cat("4. Calculating Top Regulons for Figure 1B...\n")
+py$adata <- adata
 
-### `02_pyscenic_grn_inference.py`
-Executes machine learning gene regulatory network inference via GRNBoost2 and RcisTarget.
-* **Input Files:** `data/SLE_pDC_Cleaned_For_pySCENIC.h5ad`, `data/hs_hgnc_tfs.txt`, `data/hg38__refseq-r80...feather`, `data/motifs-v9-nr...tbl`
-* **Output Artifacts:** `data/SLE_pDC_pySCENIC_Complete.h5ad`, `data/IRF7_Target_Genes.txt`, `outputs/Table_S1_Regulons_Raw.csv`
+py_run_string("
+import scanpy as sc
+import pandas as pd
+import anndata as ad
 
-### `03_go_pathway_enrichment.py`
-Performs Gene Ontology pathway enrichment testing for the IRF7 regulon.
-* **Input File:** `data/IRF7_Target_Genes.txt`
-* **Output Artifacts:** `outputs/Table_S2_GO_Enrichment.csv`, `figures/Figure_2_IRF7_GO_Enrichment.pdf`
+regulon_cols = [col for col in adata.obs.columns if col.endswith('(+)')]
+auc_matrix = adata.obs[regulon_cols].copy()
+clean_obs = adata.obs.drop(columns=regulon_cols)
+adata_auc = ad.AnnData(X=auc_matrix, obs=clean_obs)
 
-### `04_epigenetic_atac_profiling.py`
-Orthogonal validation querying ENCODE ATAC-seq databases to map physical SOX4 DNA binding motifs at the CXCR4 promoter.
-* **Input File:** ENCODE PBMC ATAC-seq data (Auto-fetches via API to `data/Human_PBMC_ATACseq_narrowPeak.bed.gz`)
-* **Output Artifacts:** `outputs/04_SOX4_Motifs.csv`, `figures/Figure_S4_ATAC_Motif_Footprint.pdf`
+sc.tl.rank_genes_groups(
+    adata_auc, 
+    groupby='disease', 
+    groups=['systemic lupus erythematosus'], 
+    reference='normal', 
+    method='wilcoxon'
+)
 
-### `05_liana_cell_communication.py`
-Maps ligand-receptor interaction networks signaling into the pDC target cells.
-* **Input File:** `data/4118e166-34f5-4c1f-9eed-c64b90a3dace.h5ad`
-* **Output Artifacts:** `outputs/LIANA_Full_Results.csv`, `outputs/pDC_CXCR4_Interactions.csv`
+top_regulons = pd.DataFrame(adata_auc.uns['rank_genes_groups']['names'])['systemic lupus erythematosus'].head(10).tolist()
 
-### `06_statistical_power_and_confounders.py`
-Executes donor-level pseudobulk partial correlations (regressing out the IFN signature) and a 1,000-iteration bootstrapping power simulation.
-* **Input File:** `data/SLE_pDC_pySCENIC_Complete.h5ad`
-* **Output Artifacts:** Console statistical readouts, `figures/Figure_4_Bootstrapping_Power_Analysis.pdf`
+records = []
+for disease_status in ['normal', 'systemic lupus erythematosus']:
+    subset_matrix = auc_matrix[clean_obs['disease'] == disease_status]
+    for reg in top_regulons:
+        expr_vals = subset_matrix[reg]
+        records.append({
+            'Regulon': reg,
+            'Disease': 'Healthy' if disease_status == 'normal' else 'SLE',
+            'Mean_Expr': expr_vals.mean(),
+            'Pct_Expr': (expr_vals > 0).mean() * 100
+        })
+dot_df = pd.DataFrame(records)
+")
 
-### `07_harmony_batch_integration.py`
-Executes native batch-effect correction across 242 distinct donor profiles.
-* **Input File:** `data/SLE_pDC_pySCENIC_Complete.h5ad`
-* **Output Artifacts:** `data/SLE_pDC_Integrated.h5ad`
+dot_df <- py$dot_df
+top_regulons <- py$top_regulons
+dot_df$Regulon <- factor(dot_df$Regulon, levels = top_regulons)
 
-### `08_cross_cohort_meta_analysis.py`
-Independently evaluates the SOX4-CXCR4 axis in an external pediatric cohort (GSE135779) and adult Lupus Nephritis kidney cohort (GSE303481), synthesizing p-values via Fisher’s Combined Probability Test.
-* **Input Files:** `data/GSE135779_genes.tsv.gz`, `data/GSE135779_RAW_Data/`, `data/GSE303481_RAW_Data/`
-* **Output Artifacts:** Console statistical readouts
+cat("5. Plotting Figure 1B Dotplot...\n")
+p_dot <- ggplot(dot_df, aes(x = Regulon, y = Disease)) +
+  geom_point(aes(size = Pct_Expr, color = Mean_Expr)) +
+  scale_color_gradientn(
+    colors = c("grey95", "#FFE0B2", "#FF9800", "#E65100", "#BF360C"),
+    name = "Mean Score"
+  ) +
+  scale_size_continuous(range = c(2.5, 9.5), name = "% Cells Active") + 
+  theme_minimal(base_size = 14) +
+  labs(x = "Top 10 SLE Regulon Networks", y = "") +
+  theme(
+    axis.text.x = element_text(face = "bold", size = 12, color = "black", angle = 45, hjust = 1),
+    axis.text.y = element_text(face = "bold", size = 13, color = "black"),
+    panel.grid.major.y = element_line(color = "grey80", linetype = "dashed"),
+    panel.grid.major.x = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    legend.title = element_text(face = "bold", size = 11),
+    legend.text = element_text(size = 10),
+    plot.margin = margin(t = 10, r = 20, b = 10, l = 10)
+  )
 
-### `09_generate_publication_figures.R`
-Generates high-resolution publication-grade visual figures utilizing `ggplot2` and `reticulate`.
-* **Input Files:** `data/SLE_pDC_Integrated.h5ad`
-* **Output Artifacts:** `figures/Supplementary_FigS1_Harmony_Integration.pdf`, `figures/Fig1A_Network_vs_Gene_Validation.pdf`, `figures/Fig1B_Top_SLE_Regulons_Dotplot.pdf`
-
----
-
-## Data Availability
-The large-scale processed `.h5ad` objects and raw network inference outputs are archived in a permanent Zenodo repository for transparency and reproducibility:
-
-**DOI: 10.5281/zenodo.20715903**  
-**Confidential Reviewer Access Link (Bypasses Embargo):** [Click Here for Data Access](https://zenodo.org/records/20715903?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjBmMzQ1YmMyLTQyNDYtNDcwOC1iMzM3LWM0YWYwYTJiZWYzNyIsImRhdGEiOnt9LCJyYW5kb20iOiJhYTNhZmJlM2I1YTM5N2ZkOTNmYmM2YTcxMmQ2OGJiNiJ9.7sOJI_Hdk_xrtas08gGL_YkhmVi69BBP4aZpOPv0w3kfutyMJvpBTKOhcRWvGtQoBtUl2BZSk4I6ngrRjBrcrw)
-
----
-
-## Requirements & Installation
-
-This pipeline is built for Python 3.10+ and R 4.x. 
-
-### 1. Install Python Dependencies
-```bash
-pip install scanpy pandas numpy scipy matplotlib seaborn pyscenic dask distributed arboreto harmonypy liana gseapy pingouin
-```
-
-### 2. Install R Dependencies (For Figure Generation)
-Script `09_generate_publication_figures.R` requires R and the following packages. Run this in your R console:
-
-```R
-install.packages(c("reticulate", "ggplot2", "dplyr", "patchwork", "viridis"))
-```
-
-# License
-This project is licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) license.
+ggsave(paste0(output_dir, "Fig_1B_Top_SLE_Regulons_Dotplot_Landscape.pdf"), plot = p_dot, width = 10, height = 4.5, dpi = 300)
+cat("SUCCESS: High-resolution PDFs have been generated in your figures folder!\n")
