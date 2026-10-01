@@ -57,7 +57,7 @@ Maps ligand-receptor interaction networks signaling into the pDC target cells.
 * **Output Artifacts:** `outputs/LIANA_Full_Results.csv`, `outputs/pDC_CXCR4_Interactions.csv`
 
 ### `06_statistical_power_and_confounders.py`
-Executes donor-level pseudobulk partial correlations (regressing out the IFN signature) and a 1,000-iteration bootstrapping power simulation.
+Executes donor-level pseudobulk partial correlations (regressing out the IFN signature) and a 1,000-iteration pseudobulk bootstrapping power simulation (n=15 donors) to calculate False Negative rates.
 * **Input File:** `data/SLE_pDC_pySCENIC_Complete.h5ad`
 * **Output Artifacts:** Console statistical readouts, `figures/Figure_4_Bootstrapping_Power_Analysis.pdf`
 
