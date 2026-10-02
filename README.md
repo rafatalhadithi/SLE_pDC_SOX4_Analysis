@@ -47,9 +47,9 @@ Performs Gene Ontology pathway enrichment testing for the IRF7 regulon.
 * **Output Artifacts:** `outputs/Table_S2_GO_Enrichment.csv`, `figures/Figure_2_IRF7_GO_Enrichment.pdf`
 
 ### `04_epigenetic_atac_profiling.py`
-Orthogonal validation querying ENCODE ATAC-seq databases to map physical SOX4 DNA binding motifs at the CXCR4 promoter.
+Orthogonal epigenetic validation querying ENCODE ATAC-seq databases to map physical chromatin accessibility. This script generates a 2-panel figure assessing both the target *CXCR4* promoter (evaluating physical SOX4 DNA binding motifs) and the *GAPDH* promoter (as a positive sequencing-depth control).
 * **Input File:** ENCODE PBMC ATAC-seq data (Auto-fetches via API to `data/Human_PBMC_ATACseq_narrowPeak.bed.gz`)
-* **Output Artifacts:** `outputs/04_SOX4_Motifs.csv`, `figures/Figure_S4_ATAC_Motif_Footprint.pdf`
+* **Output Artifacts:** `outputs/04_SOX4_Motifs.csv`, `figures/Figure_S4_ATAC_Epigenetic_Validation.pdf`
 
 ### `05_liana_cell_communication.py`
 Maps ligand-receptor interaction networks signaling into the pDC target cells.
