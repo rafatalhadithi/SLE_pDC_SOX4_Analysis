@@ -76,6 +76,20 @@ Generates high-resolution publication-grade visual figures utilizing `ggplot2` a
 * **Input Files:** `data/SLE_pDC_Integrated.h5ad`
 * **Output Artifacts:** `figures/Supplementary_FigS1_Harmony_Integration.pdf`, `figures/Fig1A_Network_vs_Gene_Validation.pdf`, `figures/Fig1B_Top_SLE_Regulons_Dotplot.pdf`
 
+### `10_spatial_xenium_mapping.py`
+Leverages sub-cellular Spatial Transcriptomics (10x Xenium) to physically map infiltrating pDCs and CXCL12-secreting niches within Lupus Nephritis target tissue. Extracts coordinates and calculates aggregated nearest-neighbor micro-meter distances across 19 biopsies to prove statistical colocalization.
+* **Input File:** `data/GSE294965_processed_data.h5ad` (Downloaded from NCBI GEO)
+* **Output Artifacts:** `figures/Figure_6_Spatial_Transcriptomics_Full.pdf`
+
+### `11_mendelian_randomization.R`
+Executes Two-Sample Mendelian Randomization (2SMR) utilizing the IEU OpenGWAS API. Instruments eQTLGen data against SLE GWAS summary statistics to differentiate between inherited genetic causality and acquired epigenetic/transcriptomic rewiring.
+* **Input Data:** Dynamic API queries to OpenGWAS (`ieu-a-313`)
+* **Output Artifacts:** 
+  * `outputs/Table_MR_Causal_Estimates.csv`
+  * `outputs/Table_MR_Heterogeneity.csv`
+  * `outputs/Table_MR_Pleiotropy.csv`
+  * `figures/Figure_7A_MR_Scatter_*.pdf`
+
 ---
 
 ## Data Availability
