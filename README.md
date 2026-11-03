@@ -2,7 +2,7 @@
 
 **Repository Status:** Private (Peer-Review Phase)
 
-This repository contains the consolidated 9-step computational pipeline used to process, integrate, and perform network inference on plasmacytoid dendritic cell (pDC) scRNA-seq data from patients with Systemic Lupus Erythematosus (SLE) for the manuscript: *"Large-Cohort Validation of a Pathogenic SOX4-CXCR4 Network in SLE pDCs."*
+This repository contains the consolidated 11-step computational pipeline used to process, integrate, and perform network inference on plasmacytoid dendritic cell (pDC) scRNA-seq data from patients with Systemic Lupus Erythematosus (SLE) for the manuscript: *"Large-Cohort Validation of a Pathogenic SOX4-CXCR4 Network in SLE pDCs."*
 
 ## Overview
 This workflow utilizes `Scanpy`, `pySCENIC`, `LIANA`, and `Harmony` to identify the **SOX4-CXCR4** regulatory axis. The analysis isolates the pathogenic network and leverages large-scale cohorts to mathematically decouple systemic inflammation from tissue-specific homing mechanisms in Lupus Nephritis.
